@@ -13,15 +13,47 @@ VkInstance instance;
 void printStats(VkPhysicalDevice & device) {
     VkPhysicalDeviceProperties properties;
     vkGetPhysicalDeviceProperties(device, &properties);
-    cout << "DeviceName: " << properties.deviceName << endl;
+    cout << "DeviceName:         " << properties.deviceName << endl;
     uint32_t apiVer = properties.apiVersion;
-    cout << "API Version: " << VK_VERSION_MAJOR(apiVer) << "." << VK_VERSION_MINOR(apiVer) << "." << VK_VERSION_PATCH(apiVer) << endl;
-    cout << "DeviceID: " << properties.deviceID << endl;
-    cout << "DeviceType: " << properties.deviceType << endl;
-    cout << "DriverVersion: " << properties.driverVersion << endl;
-    cout << "VendorID: " << properties.vendorID << endl;
+    cout << "API Version:        " << VK_VERSION_MAJOR(apiVer) << "."\
+         << VK_VERSION_MINOR(apiVer) << "." << VK_VERSION_PATCH(apiVer) << endl;
+    cout << "DeviceID:           " << properties.deviceID << endl;
+    cout << "DeviceType:         " << properties.deviceType << endl;
+    cout << "DriverVersion:      " << properties.driverVersion << endl;
+    cout << "VendorID:           " << properties.vendorID << endl;
+
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(device, &features);
+    cout << "Geometry Shader:    " << features.geometryShader << endl;
+    cout << "Tesselation Shader: " << features.tessellationShader << endl;
+
+    VkPhysicalDeviceMemoryProperties memProp;
+    vkGetPhysicalDeviceMemoryProperties(device, &memProp);
+
+    uint32_t amountOfQueueFamilies = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &amountOfQueueFamilies, NULL);
+    VkQueueFamilyProperties* familyProperties = new VkQueueFamilyProperties[amountOfQueueFamilies];
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &amountOfQueueFamilies, familyProperties);
+     
+    cout << "Amount of Queue Families: " << amountOfQueueFamilies << endl;
+
+    for (int i = 0; i < amountOfQueueFamilies; i++) {
+        cout << endl;
+        cout << "Queue Family #" << i << endl;
+        cout << "VK_QUEUE_GRAPHICS_BIT:         " << ((familyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0) << endl;
+        cout << "VK_QUEUE_COMPUTE_BIT:          " << ((familyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) != 0) << endl;
+        cout << "VK_QUEUE_TRANSFER_BIT:         " << ((familyProperties[i].queueFlags & VK_QUEUE_TRANSFER_BIT) != 0) << endl;
+        cout << "VK_QUEUE_SPARSE_BINDING_BIT:   " << ((familyProperties[i].queueFlags & VK_QUEUE_SPARSE_BINDING_BIT) != 0) << endl;
+        cout << "Queue Count:                   " << familyProperties[i].queueCount << endl;
+        cout << "Timestamp Valid Bits:          " << familyProperties[i].timestampValidBits << endl;
+        uint32_t width = familyProperties[i].minImageTransferGranularity.width;
+        uint32_t height = familyProperties[i].minImageTransferGranularity.height;
+        uint32_t depth = familyProperties[i].minImageTransferGranularity.depth;
+        cout << "Min Image Timestamp Granularity: " << width << "." << height << "." << depth << endl;
+    }
 
     cout << endl;
+    delete[] familyProperties;
 }
 
 int main()
