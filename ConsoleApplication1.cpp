@@ -1,7 +1,15 @@
+#define VK_PROTOTYPES
+#define VK_USE_PLATFORM_WIN32_KHR
+
 #include <iostream>
 #include "vulkan\vulkan.h"
+#include <vector>
 
 using namespace std;
+
+//#define VK_KHR_win32_surface 1
+//#define VK_KHR_WIN32_SURFACE_SPEC_VERSION 5
+//#define VK_KHR_WIN32_SURFACE_EXTENSION_NAME "VK_KHR_win32_surface"
 
 #define ASSERT_VULKAN(val)\
     if(val != VK_SUCCESS){\
@@ -34,7 +42,7 @@ void printStats(VkPhysicalDevice & device) {
     vkGetPhysicalDeviceMemoryProperties(device, &memProp);
 
     uint32_t amountOfQueueFamilies = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &amountOfQueueFamilies, NULL);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &amountOfQueueFamilies, nullptr);
     VkQueueFamilyProperties* familyProperties = new VkQueueFamilyProperties[amountOfQueueFamilies];
     vkGetPhysicalDeviceQueueFamilyProperties(device, &amountOfQueueFamilies, familyProperties);
      
@@ -63,7 +71,7 @@ int main()
 {   
     VkApplicationInfo appInfo;
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pNext = NULL;
+    appInfo.pNext = nullptr;
     appInfo.pApplicationName = "Vulkan Tutorial";
     appInfo.applicationVersion = VK_MAKE_VERSION(0,0,0);
     appInfo.pEngineName = "Vulkan Version Engine";
@@ -71,12 +79,13 @@ int main()
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
     uint32_t amountOfLayers = 0;
-    vkEnumerateInstanceLayerProperties(&amountOfLayers, NULL);
+    vkEnumerateInstanceLayerProperties(&amountOfLayers, nullptr);
     VkLayerProperties* layers = new VkLayerProperties[amountOfLayers];
     vkEnumerateInstanceLayerProperties(&amountOfLayers, layers);
 
     cout << "Amount of Instance Layers:" << amountOfLayers << endl;
     for (int i = 0; i < amountOfLayers; i++) {
+        cout << endl;
         cout << "Name:                   " << layers[i].layerName << endl;
         cout << "Spec Version:           " << layers[i].specVersion << endl;
         cout << "Implementation Version: " << layers[i].implementationVersion << endl;
@@ -84,60 +93,107 @@ int main()
         cout << endl;
     }
     
+    uint32_t amountOfExtensions = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &amountOfExtensions, nullptr);
+    VkExtensionProperties* extensions = new VkExtensionProperties[amountOfExtensions];
+    vkEnumerateInstanceExtensionProperties(nullptr, &amountOfExtensions, extensions);
+
+    cout << endl;
+    cout << "Amount of Extensions: " << amountOfExtensions << endl;
+    for (int i = 0; i < amountOfExtensions; i++) {
+        cout << endl;
+        cout << "Name: " << extensions[i].extensionName << endl;
+        cout << "Spec Version" << extensions[i].specVersion << endl;
+    }
+
+    const vector<const char*> validationLayers = {
+        "VK_LAYER_LUNARG_standart_validation"
+    };
+
+    const vector<const char*> usedExtensions = {
+        "VK_KHR_surface",
+        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
+    };
+
     VkInstanceCreateInfo instanceInfo = {};
     instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceInfo.pNext = NULL;
+    instanceInfo.pNext = nullptr;
     instanceInfo.flags = 0;
     instanceInfo.pApplicationInfo = &appInfo;
-    instanceInfo.enabledLayerCount = 0;
-    instanceInfo.ppEnabledLayerNames = NULL;
-    instanceInfo.enabledExtensionCount = 0;
+    instanceInfo.enabledLayerCount = validationLayers.size();
+    instanceInfo.ppEnabledLayerNames = validationLayers.data();
+    instanceInfo.enabledExtensionCount = usedExtensions.size();
+    instanceInfo.ppEnabledExtensionNames = usedExtensions.data();
 
-    VkResult result = vkCreateInstance(&instanceInfo, NULL, &instance);
+    VkResult result = vkCreateInstance(&instanceInfo, nullptr, &instance);
+    ASSERT_VULKAN(result);
 
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo;
+    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR;
+    surfaceCreateInfo.pNext = nullptr;
+    surfaceCreateInfo.flags = 0;
+    surfaceCreateInfo.hinstance = nullptr;
+    surfaceCreateInfo.hwnd = nullptr;
+
+    VkSurfaceKHR surface;
+    result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
     ASSERT_VULKAN(result);
 
     uint32_t amountOfPhysicalDevices = 0;
-    result = vkEnumeratePhysicalDevices(instance, &amountOfPhysicalDevices, NULL);
+    result = vkEnumeratePhysicalDevices(instance, &amountOfPhysicalDevices, nullptr);
     ASSERT_VULKAN(result);
 
-    VkPhysicalDevice *physicalDevices = new VkPhysicalDevice[amountOfPhysicalDevices];
-    result = vkEnumeratePhysicalDevices(instance, &amountOfPhysicalDevices, physicalDevices);
+    //VkPhysicalDevice *physicalDevices = new VkPhysicalDevice[amountOfPhysicalDevices];
+    vector<VkPhysicalDevice> physicalDevices;
+    physicalDevices.resize(amountOfPhysicalDevices);
+
+    result = vkEnumeratePhysicalDevices(instance, &amountOfPhysicalDevices, physicalDevices.data());
     ASSERT_VULKAN(result);
      
     for (int i = 0; i < amountOfPhysicalDevices; i++) {
         printStats(physicalDevices[i]);
     }
 
+    float queuePrios[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
     VkDeviceQueueCreateInfo deviceQueueCreateInfo;
     deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    deviceQueueCreateInfo.pNext = NULL;
+    deviceQueueCreateInfo.pNext = nullptr;
     deviceQueueCreateInfo.flags = 0;
     deviceQueueCreateInfo.queueFamilyIndex = 0;
     deviceQueueCreateInfo.queueCount = 4;
-    deviceQueueCreateInfo.pQueuePriorities = NULL;
+    deviceQueueCreateInfo.pQueuePriorities = queuePrios;
       
     VkPhysicalDeviceFeatures usedFeatures = {};
        
     VkDeviceCreateInfo deviceCreateInfo;
     deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.pNext = NULL;
+    deviceCreateInfo.pNext = nullptr;
     deviceCreateInfo.flags = 0;
     deviceCreateInfo.queueCreateInfoCount = 1;
     deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
     deviceCreateInfo.enabledLayerCount = 0;
-    deviceCreateInfo.ppEnabledLayerNames = NULL;
+    deviceCreateInfo.ppEnabledLayerNames = nullptr;
     deviceCreateInfo.enabledExtensionCount = 0;
-    deviceCreateInfo.ppEnabledExtensionNames = NULL;
+    deviceCreateInfo.ppEnabledExtensionNames = nullptr;
     deviceCreateInfo.pEnabledFeatures = &usedFeatures;
 
-    result = vkCreateDevice(physicalDevices[0], &deviceCreateInfo, NULL, &device);
+    result = vkCreateDevice(physicalDevices[0], &deviceCreateInfo, nullptr, &device);
     ASSERT_VULKAN(result);
 
-    //16
+    VkQueue queue;
+    vkGetDeviceQueue(device, 0, 0, &queue);
 
+    vkDeviceWaitIdle(device);
+    vkDestroyDevice(device, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroyInstance(instance, nullptr);
 
-    return 0; 
+    delete[] layers;
+    delete[] extensions;
+
+    return 0;
+    //21!
 }
 
 
