@@ -13,19 +13,21 @@ VkInstance instance;
 void printStats(VkPhysicalDevice & device) {
     VkPhysicalDeviceProperties properties;
     vkGetPhysicalDeviceProperties(device, &properties);
-    cout << "DeviceName:         " << properties.deviceName << endl;
+    cout << "DeviceName:              " << properties.deviceName << endl;
     uint32_t apiVer = properties.apiVersion;
-    cout << "API Version:        " << VK_VERSION_MAJOR(apiVer) << "."\
+    cout << "API Version:             " << VK_VERSION_MAJOR(apiVer) << "."\
          << VK_VERSION_MINOR(apiVer) << "." << VK_VERSION_PATCH(apiVer) << endl;
-    cout << "DeviceID:           " << properties.deviceID << endl;
-    cout << "DeviceType:         " << properties.deviceType << endl;
-    cout << "DriverVersion:      " << properties.driverVersion << endl;
-    cout << "VendorID:           " << properties.vendorID << endl;
+    cout << "DeviceID:                " << properties.deviceID << endl;
+    cout << "DeviceType:              " << properties.deviceType << endl;
+    cout << "discreteQueuePriorities: " << properties.limits.discreteQueuePriorities << endl;
+
+    cout << "DriverVersion:           " << properties.driverVersion << endl;
+    cout << "VendorID:                " << properties.vendorID << endl;
 
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(device, &features);
-    cout << "Geometry Shader:    " << features.geometryShader << endl;
-    cout << "Tesselation Shader: " << features.tessellationShader << endl;
+    cout << "Geometry Shader:         " << features.geometryShader << endl;
+    cout << "Tesselation Shader:      " << features.tessellationShader << endl;
 
     VkPhysicalDeviceMemoryProperties memProp;
     vkGetPhysicalDeviceMemoryProperties(device, &memProp);
@@ -92,6 +94,17 @@ int main()
     for (int i = 0; i < amountOfPhysicalDevices; i++) {
         printStats(physicalDevices[i]);
     }
+
+    VkDeviceQueueCreateInfo deviceQueueCreateInfo;
+    deviceQueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    deviceQueueCreateInfo.pNext = NULL;
+    deviceQueueCreateInfo.flags = 0;
+    deviceQueueCreateInfo.queueFamilyIndex = 0;
+    deviceQueueCreateInfo.queueCount = 4;
+    deviceQueueCreateInfo.pQueuePriorities = NULL;
+    //14
+    VkDeviceCreateInfo deviceCreateInfo;
+    
 
     return 0; 
 }
