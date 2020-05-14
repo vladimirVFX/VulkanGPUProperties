@@ -9,6 +9,7 @@ using namespace std;
     }
 
 VkInstance instance;
+VkDevice device;
 
 void printStats(VkPhysicalDevice & device) {
     VkPhysicalDeviceProperties properties;
@@ -69,8 +70,21 @@ int main()
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    VkInstanceCreateInfo instanceInfo = {};
+    uint32_t amountOfLayers = 0;
+    vkEnumerateInstanceLayerProperties(&amountOfLayers, NULL);
+    VkLayerProperties* layers = new VkLayerProperties[amountOfLayers];
+    vkEnumerateInstanceLayerProperties(&amountOfLayers, layers);
+
+    cout << "Amount of Instance Layers:" << amountOfLayers << endl;
+    for (int i = 0; i < amountOfLayers; i++) {
+        cout << "Name:                   " << layers[i].layerName << endl;
+        cout << "Spec Version:           " << layers[i].specVersion << endl;
+        cout << "Implementation Version: " << layers[i].implementationVersion << endl;
+        cout << "Description:            " << layers[i].description << endl;
+        cout << endl;
+    }
     
+    VkInstanceCreateInfo instanceInfo = {};
     instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instanceInfo.pNext = NULL;
     instanceInfo.flags = 0;
@@ -102,9 +116,26 @@ int main()
     deviceQueueCreateInfo.queueFamilyIndex = 0;
     deviceQueueCreateInfo.queueCount = 4;
     deviceQueueCreateInfo.pQueuePriorities = NULL;
-    //14
+      
+    VkPhysicalDeviceFeatures usedFeatures = {};
+       
     VkDeviceCreateInfo deviceCreateInfo;
-    
+    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceCreateInfo.pNext = NULL;
+    deviceCreateInfo.flags = 0;
+    deviceCreateInfo.queueCreateInfoCount = 1;
+    deviceCreateInfo.pQueueCreateInfos = &deviceQueueCreateInfo;
+    deviceCreateInfo.enabledLayerCount = 0;
+    deviceCreateInfo.ppEnabledLayerNames = NULL;
+    deviceCreateInfo.enabledExtensionCount = 0;
+    deviceCreateInfo.ppEnabledExtensionNames = NULL;
+    deviceCreateInfo.pEnabledFeatures = &usedFeatures;
+
+    result = vkCreateDevice(physicalDevices[0], &deviceCreateInfo, NULL, &device);
+    ASSERT_VULKAN(result);
+
+    //16
+
 
     return 0; 
 }
